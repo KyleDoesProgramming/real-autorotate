@@ -5,23 +5,23 @@ package com.first.teja2.realautorotate.UI;
  * Bala Guna Teja Karlapudi
  */
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -48,36 +48,57 @@ import static com.first.teja2.realautorotate.ViewModel.AppsRepository.nameCompar
 
 public class MainActivity extends AppCompatActivity {
 
+    public static final String EXTRA_SELECTED_PACKAGES = "extra_selected_packages";
+
     TextView title;
-    List<AppsInfo> appsInfoList = new ArrayList<>();
     List<AppsInfo> selectedAppsList = new ArrayList<>();
 
     private MainViewModel mMainViewModel;
     ImageView imageView;
     TextView tv, tv2;
     ProgressBar pb;
-    AlertDialog.Builder dialogBuilder;
     private RecyclerView mRecyclerView;
     private ItemAdapter mAdapter;
     MaterialSwitch materialSwitch;
+
+    private final ActivityResultLauncher<Intent> appSelectionLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() != RESULT_OK || result.getData() == null) {
+                    return;
+                }
+
+                ArrayList<String> packages = result.getData().getStringArrayListExtra(EXTRA_SELECTED_PACKAGES);
+                if (packages == null) {
+                    return;
+                }
+
+                applySelectedPackages(packages);
+            });
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        checkUsagePermission();
+        if (!hasRequiredPermissions()) {
+            startActivity(new Intent(this, OnboardingActivity.class));
+            return;
+        }
 
-        Boolean flag = false;
+        if (selectedAppsList == null) {
+            selectedAppsList = new ArrayList<>();
+        }
 
-        for (int i = 0; i < selectedAppsList.size(); i++) {
-
-            if (!isPackageInstalled(selectedAppsList.get(i).getAppPackageName(), getPackageManager())) {
-                mMainViewModel.setSelectedApps(this, selectedAppsList, selectedAppsList.get(i));
-                flag = true;
+        List<AppsInfo> removedApps = new ArrayList<>();
+        for (AppsInfo appsInfo : selectedAppsList) {
+            if (!isPackageInstalled(appsInfo.getAppPackageName(), getPackageManager())) {
+                removedApps.add(appsInfo);
             }
         }
 
-        if (flag) {
+        if (!removedApps.isEmpty()) {
+            for (AppsInfo appsInfo : removedApps) {
+                mMainViewModel.setSelectedApps(this, selectedAppsList, appsInfo);
+            }
 
             if (getStatus() == 1) {
                 stopService(new Intent(this, realAutorotateService.class));
@@ -114,13 +135,14 @@ public class MainActivity extends AppCompatActivity {
         mMainViewModel = new ViewModelProvider(this).get(MainViewModel.class);
         mMainViewModel.initSavedApps(getApplicationContext());
 
-        selectedAppsList = mMainViewModel.getSavedApps().getValue();
+        List<AppsInfo> savedApps = mMainViewModel.getSavedApps().getValue();
+        selectedAppsList = savedApps != null ? savedApps : new ArrayList<>();
 
         mMainViewModel.getSavedApps().observe(this, new Observer<List<AppsInfo>>() {
             @Override
             public void onChanged(@Nullable List<AppsInfo> appsList) {
 
-                selectedAppsList = appsList;
+                selectedAppsList = appsList != null ? appsList : new ArrayList<>();
 
                 if (selectedAppsList.size() > 0) {
 
@@ -179,207 +201,101 @@ public class MainActivity extends AppCompatActivity {
         }
 
         FloatingActionButton fab = findViewById(R.id.fab);
+        applySystemInsets(fab);
 
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                if (!Settings.System.canWrite(MainActivity.this)) {
-
-                    setWritePermissions();
-
-                } else {
-
-                    imageView.setVisibility(View.INVISIBLE);
-                    tv2.setVisibility(View.INVISIBLE);
-                    tv.setVisibility(View.INVISIBLE);
-                    mRecyclerView.setVisibility(View.INVISIBLE);
-
-                    pb.setVisibility(View.VISIBLE);
-
-                    loadAppListAsync();
-
+                if (!hasRequiredPermissions()) {
+                    startActivity(new Intent(MainActivity.this, OnboardingActivity.class));
+                    return;
                 }
+
+                Intent intent = new Intent(MainActivity.this, AppSelectionActivity.class);
+                ArrayList<String> selectedPackages = new ArrayList<>();
+                for (AppsInfo appsInfo : selectedAppsList) {
+                    selectedPackages.add(appsInfo.getAppPackageName());
+                }
+                intent.putStringArrayListExtra(EXTRA_SELECTED_PACKAGES, selectedPackages);
+                appSelectionLauncher.launch(intent);
 
             }
         });
 
     }
 
-    void checkUsagePermission() {
-        if (!UsageStatsHelper.hasUsageStatsPermission(this)) {
-            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this);
-            dialogBuilder.setTitle("Permission Request");
-            dialogBuilder.setCancelable(false);
-            dialogBuilder.setMessage("This app requires USAGE ACCESS permission to work. Would you like to grant the permission?");
-
-            dialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    // user clicked OK
-                    startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
-                }
-            });
-            dialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    // user clicked Cancel
-                    finishAndRemoveTask();
-                }
-            });
-            AlertDialog dialog = dialogBuilder.create();
-            dialog.show();
-        }
-    }
-
-    void setWritePermissions() {
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this);
-        dialogBuilder.setTitle("Permission Request");
-        dialogBuilder.setCancelable(false);
-        dialogBuilder.setMessage("This app requires WRITE SETTINGS permission to toggle AutoRotation. Would you like to grant the permission?");
-
-        dialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // user clicked OK
-                startActivity(new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS));
-            }
-        });
-        dialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // user clicked Cancel
-                finishAndRemoveTask();
-            }
-        });
-        AlertDialog dialog = dialogBuilder.create();
-        dialog.show();
-    }
-
-    void initDialogBox() {
-
-        String[] appNames = new String[appsInfoList.size()];
-        final boolean[] checkedItems = new boolean[appsInfoList.size()];
-
-        for (int i = 0; i < appsInfoList.size(); i++)
-            appNames[i] = appsInfoList.get(i).getAppName();
-
-        dialogBuilder = new AlertDialog.Builder(MainActivity.this);
-        dialogBuilder.setCancelable(false);
-        dialogBuilder.setTitle("Select the apps");
-
-        HashSet<String> packageHashSet = new HashSet<>();
-
-        for (AppsInfo app : selectedAppsList)
-            packageHashSet.add(app.getAppPackageName());
-
-
-        for (int i = 0; i < appsInfoList.size(); i++) {
-            if (packageHashSet.contains(appsInfoList.get(i).getAppPackageName()))
-                checkedItems[i] = true;
+    private void applySelectedPackages(List<String> packages) {
+        if (packages.isEmpty()) {
+            selectedAppsList.clear();
+            mMainViewModel.setSelectedApps(getApplicationContext(), selectedAppsList, null);
+            noAppsVisibilitySettings();
+            Snackbar.make(findViewById(R.id.cLayout), R.string.no_apps_selected, Snackbar.LENGTH_LONG).show();
+            materialSwitch.setChecked(false);
+            return;
         }
 
-        dialogBuilder.setMultiChoiceItems(appNames, checkedItems, new DialogInterface.OnMultiChoiceClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+        pb.setVisibility(View.VISIBLE);
 
-            }
-        });
-
-        dialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-                selectedAppsList.clear();
-
-                for (int i = 0; i < checkedItems.length; i++) {
-                    if (checkedItems[i]) {
-                        selectedAppsList.add(appsInfoList.get(i));
-                    }
-                }
-                if (selectedAppsList.isEmpty()) {
-
-                    noAppsVisibilitySettings();
-                    Snackbar.make(findViewById(R.id.cLayout), "No Apps Selected", Snackbar.LENGTH_LONG).show();
-                    materialSwitch.setChecked(false);
-
-                } else {
-
-                    appsSelectedVisibilitySettings();
-
-                    mMainViewModel.setSelectedApps(getApplicationContext(), selectedAppsList, null);
-
-                    materialSwitch.setChecked(true);
-
-                    setStatus(1);
-
-                    initRecyclerView();
-
-                }
-            }
-        });
-
-        dialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-                if (selectedAppsList.isEmpty()) {
-
-                    noAppsVisibilitySettings();
-
-                    Snackbar.make(findViewById(R.id.cLayout), "No Apps Selected", Snackbar.LENGTH_LONG).show();
-                    materialSwitch.setChecked(false);
-
-                } else {
-
-                    appsSelectedVisibilitySettings();
-
-                }
-                dialog.dismiss();
-            }
-        });
-
-        AlertDialog dialog = dialogBuilder.create();
-        pb.setVisibility(View.INVISIBLE);
-        dialog.show();
-    }
-
-    void initRecyclerView() {
-
-        mAdapter = new ItemAdapter(selectedAppsList, getApplicationContext(), mMainViewModel);
-        RecyclerView.LayoutManager linearLayoutManager = new LinearLayoutManager(this);
-        mRecyclerView.setLayoutManager(linearLayoutManager);
-        mRecyclerView.setAdapter(mAdapter);
-    }
-
-    private void loadAppListAsync() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Handler handler = new Handler(Looper.getMainLooper());
-
         executor.execute(() -> {
             PackageManager packageManager = getPackageManager();
-            List<ApplicationInfo> infos = packageManager.getInstalledApplications(PackageManager.GET_META_DATA);
+            List<AppsInfo> updatedApps = new ArrayList<>();
 
-            appsInfoList.clear();
-
-            for (ApplicationInfo info : infos) {
-                if (packageManager.getLaunchIntentForPackage(info.packageName) == null) {
+            HashSet<String> added = new HashSet<>();
+            for (String packageName : packages) {
+                if (added.contains(packageName)) {
                     continue;
                 }
-                String name = (String) info.loadLabel(packageManager);
-                if (name != null && name.startsWith("com.")) {
-                    continue;
+                try {
+                    CharSequence appName = packageManager.getApplicationLabel(
+                            packageManager.getApplicationInfo(packageName, 0)
+                    );
+                    if (appName != null) {
+                        updatedApps.add(new AppsInfo(appName.toString(), packageName));
+                        added.add(packageName);
+                    }
+                } catch (PackageManager.NameNotFoundException ignored) {
                 }
-                AppsInfo appsInfo = new AppsInfo((String) info.loadLabel(packageManager), info.packageName);
-                appsInfoList.add(appsInfo);
             }
 
-            Collections.sort(appsInfoList, nameComparator);
+            Collections.sort(updatedApps, nameComparator);
 
-            handler.post(() -> {
+            runOnUiThread(() -> {
                 pb.setVisibility(View.INVISIBLE);
-                initDialogBox();
+                mMainViewModel.setSelectedApps(getApplicationContext(), updatedApps, null);
+                materialSwitch.setChecked(true);
+                setStatus(1);
+                appsSelectedVisibilitySettings();
+                initRecyclerView();
             });
         });
         executor.shutdown();
+    }
+
+    private void applySystemInsets(FloatingActionButton fab) {
+        View toolbar = findViewById(R.id.toolbar);
+        ViewCompat.setOnApplyWindowInsetsListener(toolbar, (v, insets) -> {
+            Insets statusInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars());
+            v.setPadding(v.getPaddingLeft(), statusInsets.top, v.getPaddingRight(), v.getPaddingBottom());
+            return insets;
+        });
+
+        final int marginEnd = ((ViewGroup.MarginLayoutParams) fab.getLayoutParams()).rightMargin;
+        final int marginBottom = ((ViewGroup.MarginLayoutParams) fab.getLayoutParams()).bottomMargin;
+
+        ViewCompat.setOnApplyWindowInsetsListener(fab, (v, insets) -> {
+            Insets navInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            params.rightMargin = marginEnd + navInsets.right;
+            params.bottomMargin = marginBottom + navInsets.bottom;
+            v.setLayoutParams(params);
+            return insets;
+        });
+    }
+
+    private boolean hasRequiredPermissions() {
+        return UsageStatsHelper.hasUsageStatsPermission(this) && Settings.System.canWrite(this);
     }
 
     private boolean isPackageInstalled(String packagename, PackageManager packageManager) {
@@ -406,7 +322,7 @@ public class MainActivity extends AppCompatActivity {
                 .apply();
     }
 
-    void noAppsVisibilitySettings(){
+    void noAppsVisibilitySettings() {
 
         tv.setVisibility(View.INVISIBLE);
         imageView.setVisibility(View.VISIBLE);
@@ -415,13 +331,21 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    void appsSelectedVisibilitySettings(){
+    void appsSelectedVisibilitySettings() {
 
         tv.setVisibility(View.VISIBLE);
         imageView.setVisibility(View.INVISIBLE);
         tv2.setVisibility(View.INVISIBLE);
         mRecyclerView.setVisibility(View.VISIBLE);
 
+    }
+
+    void initRecyclerView() {
+
+        mAdapter = new ItemAdapter(selectedAppsList, getApplicationContext(), mMainViewModel);
+        RecyclerView.LayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(linearLayoutManager);
+        mRecyclerView.setAdapter(mAdapter);
     }
 
 }
