@@ -41,7 +41,7 @@ public final class UsageStatsHelper {
         while (usageEvents.hasNextEvent()) {
             usageEvents.getNextEvent(event);
             int eventType = event.getEventType();
-            if (eventType == UsageEvents.Event.MOVE_TO_FOREGROUND || eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
+            if (eventType == UsageEvents.Event.MOVE_TO_FOREGROUND) {
                 String packageName = event.getPackageName();
                 if (packageName != null && event.getTimeStamp() >= latestTimestamp) {
                     latestTimestamp = event.getTimeStamp();

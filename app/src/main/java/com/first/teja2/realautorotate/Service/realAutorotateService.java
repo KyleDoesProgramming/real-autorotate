@@ -22,14 +22,15 @@ import java.util.HashSet;
 
 public class realAutorotateService extends Service {
 
-    private static final long FOREGROUND_LOOKBACK_WINDOW_MILLIS = 2000L;
-    private static final long FOREGROUND_POLL_INTERVAL_MILLIS = 1000L;
+    private static final long FOREGROUND_LOOKBACK_WINDOW_MILLIS = 3000L;
+    private static final long FOREGROUND_POLL_INTERVAL_MILLIS = 1500L;
 
     HashSet<String> selectedApps;
     private HandlerThread foregroundCheckerThread;
     private Handler handler;
     private Runnable foregroundAppChecker;
     private volatile boolean isServiceActive;
+    private Integer lastRotationState;
 
     public realAutorotateService() {
     }
@@ -68,6 +69,7 @@ public class realAutorotateService extends Service {
         }
         handler = new Handler(foregroundCheckerThread.getLooper());
         isServiceActive = true;
+        lastRotationState = null;
 
         if (foregroundAppChecker != null) {
             handler.removeCallbacks(foregroundAppChecker);
@@ -77,10 +79,10 @@ public class realAutorotateService extends Service {
             @Override
             public void run() {
                 String packageName = UsageStatsHelper.getForegroundAppPackage(realAutorotateService.this, FOREGROUND_LOOKBACK_WINDOW_MILLIS);
-                if (packageName != null && selectedApps.contains(packageName)) {
-                    Settings.System.putInt(realAutorotateService.this.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 1);
-                } else {
-                    Settings.System.putInt(realAutorotateService.this.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
+                int targetRotationState = (packageName != null && selectedApps.contains(packageName)) ? 1 : 0;
+                if (lastRotationState == null || lastRotationState != targetRotationState) {
+                    Settings.System.putInt(realAutorotateService.this.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, targetRotationState);
+                    lastRotationState = targetRotationState;
                 }
                 if (isServiceActive && handler != null) {
                     handler.postDelayed(this, FOREGROUND_POLL_INTERVAL_MILLIS);
@@ -111,6 +113,7 @@ public class realAutorotateService extends Service {
             foregroundCheckerThread.quitSafely();
             foregroundCheckerThread = null;
         }
+        lastRotationState = null;
         foregroundAppChecker = null;
         handler = null;
     }
