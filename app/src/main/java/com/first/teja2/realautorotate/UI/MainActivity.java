@@ -379,6 +379,7 @@ public class MainActivity extends AppCompatActivity {
                 initDialogBox();
             });
         });
+        executor.shutdown();
     }
 
     private boolean isPackageInstalled(String packagename, PackageManager packageManager) {

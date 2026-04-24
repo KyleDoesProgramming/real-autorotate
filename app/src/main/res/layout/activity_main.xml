@@ -38,7 +38,7 @@
                     android:fontFamily="sans-serif-medium"
                     android:text="Real AutoRotate"
                     android:textColor="?attr/colorOnPrimary"
-                    android:textSize="20dp"
+                    android:textSize="20sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.0"
