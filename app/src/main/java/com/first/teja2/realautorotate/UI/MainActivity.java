@@ -6,40 +6,41 @@ package com.first.teja2.realautorotate.UI;
  */
 
 import android.app.AlertDialog;
-import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.first.teja2.realautorotate.Model.AppsInfo;
 import com.first.teja2.realautorotate.R;
 import com.first.teja2.realautorotate.Service.realAutorotateService;
 import com.first.teja2.realautorotate.ViewModel.MainViewModel;
-import com.github.angads25.toggle.interfaces.OnToggledListener;
-import com.github.angads25.toggle.model.ToggleableView;
-import com.github.angads25.toggle.widget.LabeledSwitch;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.materialswitch.MaterialSwitch;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.first.teja2.realautorotate.ViewModel.AppsRepository.nameComparator;
 import static com.rvalerio.fgchecker.Utils.hasUsageStatsPermission;
@@ -58,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
     AlertDialog.Builder dialogBuilder;
     private RecyclerView mRecyclerView;
     private ItemAdapter mAdapter;
-    LabeledSwitch labeledSwitch;
+    MaterialSwitch materialSwitch;
 
     @Override
     protected void onResume() {
@@ -106,12 +107,11 @@ public class MainActivity extends AppCompatActivity {
         imageView = findViewById(R.id.imageView);
         imageView.setVisibility(View.GONE);
 
-        labeledSwitch = findViewById(R.id.switch1);
-        labeledSwitch.setColorOn(Color.parseColor("#283c97"));
+        materialSwitch = findViewById(R.id.switch1);
 
         mRecyclerView = findViewById(R.id.recyclerView);
 
-        mMainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+        mMainViewModel = new ViewModelProvider(this).get(MainViewModel.class);
         mMainViewModel.initSavedApps(getApplicationContext());
 
         selectedAppsList = mMainViewModel.getSavedApps().getValue();
@@ -124,12 +124,12 @@ public class MainActivity extends AppCompatActivity {
 
                 if (selectedAppsList.size() > 0) {
 
-                    labeledSwitch.setEnabled(true);
+                    materialSwitch.setEnabled(true);
 
                     if (getStatus() == 1)
-                        labeledSwitch.setOn(true);
+                        materialSwitch.setChecked(true);
                     else
-                        labeledSwitch.setOn(false);
+                        materialSwitch.setChecked(false);
 
 
                     initRecyclerView();
@@ -143,30 +143,27 @@ public class MainActivity extends AppCompatActivity {
 
                     noAppsVisibilitySettings();
 
-                    labeledSwitch.setOn(false);
-                    labeledSwitch.setEnabled(false);
+                    materialSwitch.setChecked(false);
+                    materialSwitch.setEnabled(false);
 
                 }
             }
         });
 
 
-        labeledSwitch.setOnToggledListener(new OnToggledListener() {
-            @Override
-            public void onSwitched(ToggleableView toggleableView, boolean isOn) {
-                if (isOn) {
+        materialSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
 
-                    setStatus(1);
+                setStatus(1);
 
-                    startService(new Intent(MainActivity.this, realAutorotateService.class));
-                    labeledSwitch.setOn(true);
+                startService(new Intent(MainActivity.this, realAutorotateService.class));
+                materialSwitch.setChecked(true);
 
-                } else {
+            } else {
 
-                    setStatus(0);
+                setStatus(0);
 
-                    stopService(new Intent(MainActivity.this, realAutorotateService.class));
-                }
+                stopService(new Intent(MainActivity.this, realAutorotateService.class));
             }
         });
 
@@ -177,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
             initRecyclerView();
 
             if (status == 1)
-                labeledSwitch.setOn(true);
+                materialSwitch.setChecked(true);
 
         }
 
@@ -200,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
 
                     pb.setVisibility(View.VISIBLE);
 
-                    new AppListAsync().execute(PackageManager.GET_META_DATA);
+                    loadAppListAsync();
 
                 }
 
@@ -304,7 +301,7 @@ public class MainActivity extends AppCompatActivity {
 
                     noAppsVisibilitySettings();
                     Snackbar.make(findViewById(R.id.cLayout), "No Apps Selected", Snackbar.LENGTH_LONG).show();
-                    labeledSwitch.setOn(false);
+                    materialSwitch.setChecked(false);
 
                 } else {
 
@@ -312,7 +309,7 @@ public class MainActivity extends AppCompatActivity {
 
                     mMainViewModel.setSelectedApps(getApplicationContext(), selectedAppsList, null);
 
-                    labeledSwitch.setOn(true);
+                    materialSwitch.setChecked(true);
 
                     setStatus(1);
 
@@ -329,7 +326,7 @@ public class MainActivity extends AppCompatActivity {
                     noAppsVisibilitySettings();
 
                     Snackbar.make(findViewById(R.id.cLayout), "No Apps Selected", Snackbar.LENGTH_LONG).show();
-                    labeledSwitch.setOn(false);
+                    materialSwitch.setChecked(false);
 
                 } else {
 
@@ -347,52 +344,42 @@ public class MainActivity extends AppCompatActivity {
 
     void initRecyclerView() {
 
-        //Log.d("demo", "Inside Recycler Init:"+selectedAppsList.size());
         mAdapter = new ItemAdapter(selectedAppsList, getApplicationContext(), mMainViewModel);
         RecyclerView.LayoutManager linearLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(linearLayoutManager);
         mRecyclerView.setAdapter(mAdapter);
     }
 
-    public class AppListAsync extends AsyncTask<Integer, Integer, List<AppsInfo>> {
+    private void loadAppListAsync() {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
 
-        @Override
-        protected List<AppsInfo> doInBackground(Integer... integers) {
-
+        executor.execute(() -> {
             PackageManager packageManager = getPackageManager();
-            List<ApplicationInfo> infos = packageManager.getInstalledApplications(integers[0]);
+            List<ApplicationInfo> infos = packageManager.getInstalledApplications(PackageManager.GET_META_DATA);
 
             appsInfoList.clear();
 
             for (ApplicationInfo info : infos) {
-                if ((packageManager.getLaunchIntentForPackage(info.packageName) == null)) {
+                if (packageManager.getLaunchIntentForPackage(info.packageName) == null) {
                     continue;
-                } else {
-                    String name = (String) info.loadLabel(packageManager);
-                    if (name != null)
-                        if (name.startsWith("com.")) {
-                            continue;
-                        }
-
-                    AppsInfo appsInfo = new AppsInfo((String) info.loadLabel(packageManager), info.packageName);
-                    appsInfoList.add(appsInfo);
                 }
+                String name = (String) info.loadLabel(packageManager);
+                if (name != null && name.startsWith("com.")) {
+                    continue;
+                }
+                AppsInfo appsInfo = new AppsInfo((String) info.loadLabel(packageManager), info.packageName);
+                appsInfoList.add(appsInfo);
             }
 
             Collections.sort(appsInfoList, nameComparator);
 
-            return appsInfoList;
-
-        }
-
-        @Override
-        protected void onPostExecute(List<AppsInfo> appsInfos) {
-            super.onPostExecute(appsInfos);
-
-            pb.setVisibility(View.INVISIBLE);
-            initDialogBox();
-
-        }
+            handler.post(() -> {
+                pb.setVisibility(View.INVISIBLE);
+                initDialogBox();
+            });
+        });
+        executor.shutdown();
     }
 
     private boolean isPackageInstalled(String packagename, PackageManager packageManager) {

@@ -8,9 +8,9 @@ package com.first.teja2.realautorotate.ViewModel;
  */
 
 
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.ViewModel;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
 import android.content.Context;
 
 import com.first.teja2.realautorotate.Model.AppsInfo;
