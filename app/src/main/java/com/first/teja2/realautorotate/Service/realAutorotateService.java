@@ -8,20 +8,29 @@ Bala Guna Teja Karlapudi
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 
+import com.first.teja2.realautorotate.Util.UsageStatsHelper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.rvalerio.fgchecker.AppChecker;
 
 import java.lang.reflect.Type;
 import java.util.HashSet;
 
 public class realAutorotateService extends Service {
 
-    AppChecker appChecker;
+    private static final long FOREGROUND_LOOKBACK_WINDOW_MILLIS = 3000L;
+    private static final long FOREGROUND_POLL_INTERVAL_MILLIS = 1500L;
+
     HashSet<String> selectedApps;
+    private HandlerThread foregroundCheckerThread;
+    private Handler handler;
+    private Runnable foregroundAppChecker;
+    private volatile boolean isServiceActive;
+    private Integer lastRotationState;
 
     public realAutorotateService() {
     }
@@ -37,31 +46,50 @@ public class realAutorotateService extends Service {
         Type type = new TypeToken<HashSet<String>>() {
         }.getType();
         selectedApps = gson.fromJson(jsonData, type);
+        if (selectedApps == null) {
+            selectedApps = new HashSet<>();
+        }
 
         int status = PreferenceManager
                 .getDefaultSharedPreferences(this)
                 .getInt("status", -1);
 
-        appChecker = new AppChecker();
-
-
         if (Settings.System.canWrite(realAutorotateService.this) && !selectedApps.isEmpty() && status == 1) {
-            appChecker.whenAny(new AppChecker.Listener() {
-                @Override
-                public void onForeground(String packageName) {
-                    if (selectedApps.contains(packageName)) {
-                        Settings.System.putInt(realAutorotateService.this.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 1);
-                    } else {
-                        Settings.System.putInt(realAutorotateService.this.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
-                    }
-                }
-            })
-                    .timeout(1000)
-                    .start(this);
+            startForegroundAppChecks();
         } else
             this.stopSelf();
 
         return START_STICKY;
+    }
+
+    private void startForegroundAppChecks() {
+        if (foregroundCheckerThread == null || !foregroundCheckerThread.isAlive()) {
+            foregroundCheckerThread = new HandlerThread("ForegroundAppChecker");
+            foregroundCheckerThread.start();
+        }
+        handler = new Handler(foregroundCheckerThread.getLooper());
+        isServiceActive = true;
+        lastRotationState = null;
+
+        if (foregroundAppChecker != null) {
+            handler.removeCallbacks(foregroundAppChecker);
+        }
+
+        foregroundAppChecker = new Runnable() {
+            @Override
+            public void run() {
+                String packageName = UsageStatsHelper.getForegroundAppPackage(realAutorotateService.this, FOREGROUND_LOOKBACK_WINDOW_MILLIS);
+                int targetRotationState = (packageName != null && selectedApps.contains(packageName)) ? 1 : 0;
+                if (lastRotationState == null || lastRotationState != targetRotationState) {
+                    Settings.System.putInt(realAutorotateService.this.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, targetRotationState);
+                    lastRotationState = targetRotationState;
+                }
+                if (isServiceActive && handler != null) {
+                    handler.postDelayed(this, FOREGROUND_POLL_INTERVAL_MILLIS);
+                }
+            }
+        };
+        handler.post(foregroundAppChecker);
     }
 
     @Override
@@ -77,6 +105,16 @@ public class realAutorotateService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        appChecker.stop();
+        isServiceActive = false;
+        if (handler != null && foregroundAppChecker != null) {
+            handler.removeCallbacks(foregroundAppChecker);
+        }
+        if (foregroundCheckerThread != null) {
+            foregroundCheckerThread.quitSafely();
+            foregroundCheckerThread = null;
+        }
+        lastRotationState = null;
+        foregroundAppChecker = null;
+        handler = null;
     }
 }
