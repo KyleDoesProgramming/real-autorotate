@@ -54,7 +54,7 @@ public final class UsageStatsHelper {
             return foregroundPackage;
         }
 
-        List<UsageStats> usageStats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime, endTime);
+        List<UsageStats> usageStats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_BEST, startTime, endTime);
         if (usageStats == null || usageStats.isEmpty()) {
             return null;
         }

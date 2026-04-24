@@ -22,6 +22,9 @@ import java.util.HashSet;
 
 public class realAutorotateService extends Service {
 
+    private static final long FOREGROUND_LOOKBACK_WINDOW_MILLIS = 2000L;
+    private static final long FOREGROUND_POLL_INTERVAL_MILLIS = 1000L;
+
     HashSet<String> selectedApps;
     private Handler handler;
     private Runnable foregroundAppChecker;
@@ -58,13 +61,13 @@ public class realAutorotateService extends Service {
             foregroundAppChecker = new Runnable() {
                 @Override
                 public void run() {
-                    String packageName = UsageStatsHelper.getForegroundAppPackage(realAutorotateService.this, 10000L);
+                    String packageName = UsageStatsHelper.getForegroundAppPackage(realAutorotateService.this, FOREGROUND_LOOKBACK_WINDOW_MILLIS);
                     if (packageName != null && selectedApps.contains(packageName)) {
                         Settings.System.putInt(realAutorotateService.this.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 1);
                     } else {
                         Settings.System.putInt(realAutorotateService.this.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
                     }
-                    handler.postDelayed(this, 1000L);
+                    handler.postDelayed(this, FOREGROUND_POLL_INTERVAL_MILLIS);
                 }
             };
             handler.post(foregroundAppChecker);
