@@ -8,20 +8,23 @@ Bala Guna Teja Karlapudi
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 
+import com.first.teja2.realautorotate.Util.UsageStatsHelper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.rvalerio.fgchecker.AppChecker;
 
 import java.lang.reflect.Type;
 import java.util.HashSet;
 
 public class realAutorotateService extends Service {
 
-    AppChecker appChecker;
     HashSet<String> selectedApps;
+    private Handler handler;
+    private Runnable foregroundAppChecker;
 
     public realAutorotateService() {
     }
@@ -37,27 +40,34 @@ public class realAutorotateService extends Service {
         Type type = new TypeToken<HashSet<String>>() {
         }.getType();
         selectedApps = gson.fromJson(jsonData, type);
+        if (selectedApps == null) {
+            selectedApps = new HashSet<>();
+        }
 
         int status = PreferenceManager
                 .getDefaultSharedPreferences(this)
                 .getInt("status", -1);
 
-        appChecker = new AppChecker();
-
-
         if (Settings.System.canWrite(realAutorotateService.this) && !selectedApps.isEmpty() && status == 1) {
-            appChecker.whenAny(new AppChecker.Listener() {
+            if (handler == null) {
+                handler = new Handler(Looper.getMainLooper());
+            }
+            if (foregroundAppChecker != null) {
+                handler.removeCallbacks(foregroundAppChecker);
+            }
+            foregroundAppChecker = new Runnable() {
                 @Override
-                public void onForeground(String packageName) {
-                    if (selectedApps.contains(packageName)) {
+                public void run() {
+                    String packageName = UsageStatsHelper.getForegroundAppPackage(realAutorotateService.this, 10000L);
+                    if (packageName != null && selectedApps.contains(packageName)) {
                         Settings.System.putInt(realAutorotateService.this.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 1);
                     } else {
                         Settings.System.putInt(realAutorotateService.this.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
                     }
+                    handler.postDelayed(this, 1000L);
                 }
-            })
-                    .timeout(1000)
-                    .start(this);
+            };
+            handler.post(foregroundAppChecker);
         } else
             this.stopSelf();
 
@@ -77,6 +87,8 @@ public class realAutorotateService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        appChecker.stop();
+        if (handler != null && foregroundAppChecker != null) {
+            handler.removeCallbacks(foregroundAppChecker);
+        }
     }
 }

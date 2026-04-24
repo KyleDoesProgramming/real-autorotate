@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.first.teja2.realautorotate.Model.AppsInfo;
 import com.first.teja2.realautorotate.R;
 import com.first.teja2.realautorotate.Service.realAutorotateService;
+import com.first.teja2.realautorotate.Util.UsageStatsHelper;
 import com.first.teja2.realautorotate.ViewModel.MainViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
@@ -43,7 +44,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.first.teja2.realautorotate.ViewModel.AppsRepository.nameComparator;
-import static com.rvalerio.fgchecker.Utils.hasUsageStatsPermission;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -207,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void checkUsagePermission() {
-        if (!hasUsageStatsPermission(this)) {
+        if (!UsageStatsHelper.hasUsageStatsPermission(this)) {
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this);
             dialogBuilder.setTitle("Permission Request");
             dialogBuilder.setCancelable(false);
