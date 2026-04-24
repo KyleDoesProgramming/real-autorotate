@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:id="@+id/rotation_dialog_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Default | Default"
+            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+            android:textColor="?attr/colorOnSurface"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/rotation_mode_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp">
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/rotation_follow_default"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/rotation_rule_follow_default" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/rotation_lock_rotation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/rotation_lock_rotation" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/rotation_allow_rotation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/rotation_allow_rotation" />
+
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/rotation_specific_title"
+            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+            android:textColor="?attr/colorOnSurface"
+            android:textStyle="bold" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/rotation_0"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:useMaterialThemeColors="true"
+            android:text="0" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/rotation_90"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:useMaterialThemeColors="true"
+            android:text="90" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/rotation_180"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:useMaterialThemeColors="true"
+            android:text="180" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/rotation_270"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:useMaterialThemeColors="true"
+            android:text="270" />
+
+    </LinearLayout>
+
+</ScrollView>

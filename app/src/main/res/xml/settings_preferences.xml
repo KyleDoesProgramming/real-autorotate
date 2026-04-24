@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <ListPreference
+        android:key="operation_mode"
+        android:icon="@drawable/ms_tune_24"
+        android:title="@string/operation_mode_title"
+        android:entries="@array/operation_mode_entries"
+        android:entryValues="@array/operation_mode_values"
+        android:summary="@string/operation_mode_summary"
+        app:useSimpleSummaryProvider="true" />
+
+    <Preference
+        android:key="operation_mode_status"
+        android:icon="@drawable/ms_shield_24"
+        android:selectable="false"
+        android:title="@string/operation_mode_backend_title"
+        android:summary="@string/operation_mode_hint" />
+
+</PreferenceScreen>

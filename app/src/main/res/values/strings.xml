@@ -1,21 +1,67 @@
 <resources>
     <string name="app_name">Real AutoRotate</string>
     <string name="action_settings">Settings</string>
+    <string name="settings_screen_title">Settings</string>
     <string name="sApps">Selected Apps</string>
     <string name="selectedApps">SelectedApps</string>
     <string name="instruction">Tap on the \"Plus\" Button Below to Select the Apps</string>
     <string name="no_apps_selected">No Apps Selected</string>
+    <string name="main_toolbar_subtitle">Per-app rotation automation</string>
+    <string name="main_toggle_title">Service status</string>
+    <string name="main_toggle_subtitle">Enable to enforce rules while apps run</string>
+    <string name="empty_state_title">No app rules yet</string>
+    <string name="empty_state_subtitle">Add apps to create custom rotation behavior.</string>
+    <string name="add_apps">Add apps</string>
+    <string name="remove_app_rule">Remove app rule</string>
+    <string name="open_rotation_rule">Open rotation rule</string>
+    <string name="select_apps_subtitle">Tap an app to add it and configure rotation instantly</string>
+    <string name="search_apps_hint">Search apps</string>
+    <string name="save_selection_count">Save (%1$d)</string>
 
     <string name="onboarding_title">Welcome to Real AutoRotate</string>
-    <string name="onboarding_subtitle">Grant the required permissions to automatically manage screen rotation per app.</string>
+    <string name="onboarding_subtitle">Grant the required permissions, or use a privileged backend when available, so rotation stays active.</string>
     <string name="permission_usage_title">Usage Access Permission</string>
     <string name="permission_write_title">Modify System Settings Permission</string>
+    <string name="permission_battery_title">Battery Optimization</string>
     <string name="grant_usage_permission">Grant Usage Access</string>
     <string name="grant_write_permission">Grant Write Settings</string>
+    <string name="grant_battery_permission">Disable Battery Optimization</string>
     <string name="permission_granted">Granted</string>
     <string name="permission_required">Required</string>
+    <string name="permission_not_required">Not required</string>
     <string name="continue_to_app">Continue</string>
 
     <string name="select_apps_screen_title">Select Apps</string>
     <string name="save_selection">Save Selection</string>
+
+    <string name="operation_mode_title">Operation Mode</string>
+    <string name="operation_mode_summary">Choose how rotation rules are enforced.</string>
+    <string name="operation_mode_hint">Auto uses the best available backend. Accessibility uses the regular permission path. Root and Shizuku use a privileged helper when available.</string>
+    <string name="operation_mode_backend_title">Backend Status</string>
+    <string name="operation_mode_auto">Auto</string>
+    <string name="operation_mode_accessibility">Accessibility</string>
+    <string name="operation_mode_root">Root</string>
+    <string name="operation_mode_shizuku">Shizuku</string>
+    <string name="backend_status_auto_unavailable">Auto mode is active, but no privileged backend is available. Accessibility will be used.</string>
+    <string name="backend_status_accessibility">Accessibility mode is active.</string>
+    <string name="backend_status_root_ready">Root backend is ready.</string>
+    <string name="backend_status_shizuku_ready">Shizuku backend is ready.</string>
+    <string name="backend_status_root_unavailable">Root mode is selected, but a root backend is not available.</string>
+    <string name="backend_status_shizuku_unavailable">Shizuku mode is selected, but a Shizuku backend is not available.</string>
+    <string name="backend_status_privileged_unavailable">Privileged backend is not available. The app will fall back to the standard path.</string>
+
+    <string name="rotation_rule_title">Rotation rule</string>
+    <string name="rotation_rule_follow_default">Follow default rule</string>
+    <string name="rotation_rule_force_rotate">Allow rotation</string>
+    <string name="rotation_rule_force_lock">Lock rotation</string>
+    <string name="rotation_allow_rotation">Allow rotation</string>
+    <string name="rotation_lock_rotation">Lock rotation</string>
+    <string name="rotation_specific_title">Specific</string>
+    <string name="rotation_portrait_label">0 - Portrait</string>
+    <string name="rotation_landscape_label">90 - Landscape</string>
+    <string name="rotation_reverse_portrait_label">180 - Reverse Portrait</string>
+    <string name="rotation_reverse_landscape_label">270 - Reverse Landscape</string>
+    <string name="rotation_config_screen_title">Rotation Config</string>
+    <string name="rotation_config_save">Save</string>
+    <string name="rotation_config_subtitle">Set orientation behavior for this target</string>
 </resources>

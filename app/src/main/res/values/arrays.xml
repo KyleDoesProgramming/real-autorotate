@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="operation_mode_entries">
+        <item>@string/operation_mode_auto</item>
+        <item>@string/operation_mode_accessibility</item>
+        <item>@string/operation_mode_root</item>
+        <item>@string/operation_mode_shizuku</item>
+    </string-array>
+
+    <string-array name="operation_mode_values">
+        <item>auto</item>
+        <item>accessibility</item>
+        <item>root</item>
+        <item>shizuku</item>
+    </string-array>
+</resources>
