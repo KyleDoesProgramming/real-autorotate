@@ -1,167 +1,104 @@
 # Real AutoRotate
 
-[![Android](https://img.shields.io/badge/Android-API%2021+-green.svg)](https://developer.android.com/about/versions)
+[![Android](https://img.shields.io/badge/Android-API%2024+-green.svg)](https://developer.android.com/about/versions)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Google Play](https://img.shields.io/badge/Google%20Play-Download-brightgreen.svg)](https://play.google.com/store/apps/details?id=com.first.teja2.realautorotate)
 
-An intelligent Android application that automatically manages auto-rotate settings based on the foreground application. Say goodbye to accidentally rotated screens when switching between apps!
+Real AutoRotate keeps screen rotation aligned with the app you are using. The current build features a Material You interface, a searchable app picker, per-app rotation rules, and optional privileged backends for stronger enforcement.
 
-## 🎯 Features
+Original repository: [teja2495/real-autorotate](https://github.com/teja2495/real-autorotate)
 
-- **App-Specific Auto-Rotate**: Automatically enables auto-rotate only for selected applications
-- **Smart Background Service**: Monitors foreground apps and manages rotation settings seamlessly
-- **User-Friendly Interface**: Simple and intuitive app selection interface
-- **No Internet Required**: Works completely offline - no data sent to external servers
-- **Battery Efficient**: Lightweight background service with minimal resource usage
+## Features
 
-## 🚀 How It Works
+- Material 3 and Material You styling with Material Symbols icons
+- Searchable app picker with tap-to-add flow
+- Per-app rules for follow default, lock rotation, allow rotation, and specific orientations
+- Backend modes for auto, accessibility, root, and Shizuku
+- Battery optimization guidance and stable foreground tracking
+- Offline by design
 
-Real AutoRotate solves the common problem of forgetting to disable auto-rotate after using apps like YouTube or Photo Gallery. The app:
+## Screenshots
 
-1. **Monitors** which application is currently in the foreground
-2. **Automatically enables** auto-rotate for your selected apps
-3. **Disables** auto-rotate when switching to other applications
-4. **Runs silently** in the background without interfering with your workflow
+| Onboarding                                    | Main screen                                         |
+| --------------------------------------------- | --------------------------------------------------- |
+| ![Onboarding](screenshots/welcome-screen.png) | ![Main screen](screenshots/selected-apps.png)       |
+| App picker                                    | Rotation config                                     |
+| ![App picker](screenshots/app-list.png)       | ![Rotation config](screenshots/rotation-config.png) |
 
-## 📱 Screenshots
+## Installation
 
-| Welcome Screen | App Selection | Selected Apps |
-|----------------|---------------|---------------|
-| ![Welcome Screen](screenshots/welcome-screen.png) | ![App Selection](screenshots/app-list.png) | ![Selected Apps](screenshots/selected-apps.png) |
+### From source
 
-## 📱 Installation
-
-### From Google Play Store
-1. Download from [Google Play Store](https://play.google.com/store/apps/details?id=com.first.teja2.realautorotate)
-2. Install and launch the app
-3. Grant required permissions when prompted
-
-### From Source Code
 ```bash
-git clone https://github.com/yourusername/real-autorotate.git
+git clone <repository-url>
 cd real-autorotate
 ./gradlew assembleDebug
 ```
 
-## 🔧 Setup Instructions
+Install `app/build/outputs/apk/debug/app-debug.apk` on a connected device or emulator.
 
-### Step 1: Grant Permissions
-When you first open the app, it will request necessary permissions:
-- **Usage Stats Permission**: Required to detect which app is in the foreground
-- **Write Settings Permission**: Required to toggle auto-rotate settings
+## Setup
 
-### Step 2: Select Applications
-1. Tap the "Select Apps" icon in the bottom right corner
-2. Choose the applications where you want auto-rotate enabled
-3. Press "OKAY" to confirm your selection
+1. Open the app and grant Usage Access.
+2. Grant Modify System Settings unless a privileged backend is available.
+3. Disable battery optimization for the app when prompted.
+4. Tap the floating action button to add an app.
+5. Tap a rule card to edit its rotation behavior.
+6. Use the service switch to start or stop enforcement.
 
-### Step 3: Enable Service
-1. Toggle the service switch in the top right corner
-2. Grant any additional permissions if prompted
+## Settings
 
-### Step 4: Enjoy!
-The app will now automatically manage auto-rotate settings based on your selected applications.
+Open the toolbar settings button to choose the backend mode. Auto picks the best available backend and falls back to the standard permission path when no privileged helper is available.
 
-## ⚙️ Configuration
+## Permissions
 
-### Adding/Removing Apps
-- **To add apps**: Tap "Select Apps" and check the desired applications
-- **To remove apps**: Uncheck the app from the selection list
+| Permission                             | Purpose                                      | Required                                     |
+| -------------------------------------- | -------------------------------------------- | -------------------------------------------- |
+| `PACKAGE_USAGE_STATS`                  | Detect the foreground app                    | Yes                                          |
+| `WRITE_SETTINGS`                       | Apply rotation changes in accessibility mode | Yes unless a privileged backend is available |
+| `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | Keep background monitoring reliable          | Yes                                          |
 
-### Manual Override
-If you need to manually control auto-rotate settings, simply disable the service toggle within the app.
+## Architecture
 
-## 🔒 Permissions Explained
-
-| Permission | Purpose | Required |
-|------------|---------|----------|
-| `PACKAGE_USAGE_STATS` | Detects which app is currently in the foreground | ✅ Yes |
-| `WRITE_SETTINGS` | Toggles system auto-rotate setting | ✅ Yes |
-
-**Note**: The app does not require internet connectivity and does not send any data to external servers.
-
-## 🏗️ Architecture
-
-- **Pattern**: MVVM (Model-View-ViewModel)
-- **Language**: Java
-- **Minimum SDK**: API 21 (Android 5.0)
-- **Target SDK**: Latest stable Android version
+- Language: Java
+- Pattern: MVVM
+- Minimum SDK: 24
+- Target SDK: 35
 
 ### Project Structure
-```
-app/src/main/java/com/first/teja2/realautorotate/
+
+```text
+app/src/main/java/com/example/autorotate/
 ├── Model/
 │   └── AppsInfo.java
 ├── Service/
-│   └── realAutorotateService.java
+│   ├── realAutorotateService.java
+│   └── RotationService.java
 ├── UI/
 │   ├── MainActivity.java
-│   └── ItemAdapter.java
+│   ├── AppSelectionActivity.java
+│   ├── AppRotationConfigActivity.java
+│   ├── OnboardingActivity.java
+│   ├── SettingsActivity.java
+│   └── SettingsFragment.java
+├── Util/
+│   ├── OperationMode.java
+│   ├── OperationModeStore.java
+│   ├── PermissionGate.java
+│   ├── RotationBackend.java
+│   ├── RotationSettings.java
+│   └── UsageStatsHelper.java
 └── ViewModel/
     ├── MainViewModel.java
     └── AppsRepository.java
 ```
 
-## ⚠️ Important Notes
+## Notes
 
-- **Don't remove from recent apps**: The service stops if the app is removed from the recent apps screen
-- **Service restart**: If accidentally removed, simply open the app again to re-enable the service
-- **Manual override**: Disable the service within the app if you want to manually control auto-rotate
+- Auto mode falls back to the standard permission path when no privileged backend is available.
+- The service reasserts rotation after brief home or recents transitions.
+- The app does not use the network.
 
-## 🤝 Contributing
+## License
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-### Development Setup
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-### License Summary
-- **Type**: MIT License
-- **Year**: 2024
-- **Copyright**: Real AutoRotate
-- **Permissions**: 
-  - ✅ Commercial use
-  - ✅ Modification
-  - ✅ Distribution
-  - ✅ Private use
-- **Limitations**: 
-  - ❌ No liability
-  - ❌ No warranty
-- **Conditions**: 
-  - 📋 License and copyright notice must be included
-
-### Third-Party Licenses
-This project uses the following open-source libraries:
-- **Foreground App Checker**: [ricvalerio/foregroundappchecker](https://github.com/ricvalerio/foregroundappchecker) - Used for detecting foreground applications
-- **Android Toggle**: [Angads25/android-toggle](https://github.com/Angads25/android-toggle) - Used for toggle button UI component
-
-For detailed license information of third-party libraries, please refer to their respective repositories.
-
-## 🙏 Credits
-
-- **App Icon**: Designed by [Freepik](https://www.flaticon.com/) from [Flaticon](https://www.flaticon.com/)
-- **Foreground App Checker**: [ricvalerio/foregroundappchecker](https://github.com/ricvalerio/foregroundappchecker)
-- **Toggle Button**: [Angads25/android-toggle](https://github.com/Angads25/android-toggle)
-
-## 📞 Support
-
-If you encounter any issues or have questions:
-- Create an issue on GitHub
-- Rate the app on Google Play Store
-- Leave feedback in the app
-
-## 📋 Legal
-
-- [Privacy Policy](PRIVACY_POLICY.md) - Learn how we handle your data
-
----
-
-**Made with ❤️ for Android users who want smarter auto-rotate control**
+Licensed under the MIT License. See [LICENSE](LICENSE).
+See [Privacy Policy](PRIVACY_POLICY.md) for data handling details.
