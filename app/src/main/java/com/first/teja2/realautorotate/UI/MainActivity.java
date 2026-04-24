@@ -8,7 +8,6 @@ package com.first.teja2.realautorotate.UI;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +24,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -83,10 +83,6 @@ public class MainActivity extends AppCompatActivity {
         if (!hasRequiredPermissions()) {
             startActivity(new Intent(this, OnboardingActivity.class));
             return;
-        }
-
-        if (selectedAppsList == null) {
-            selectedAppsList = new ArrayList<>();
         }
 
         List<AppsInfo> removedApps = new ArrayList<>();

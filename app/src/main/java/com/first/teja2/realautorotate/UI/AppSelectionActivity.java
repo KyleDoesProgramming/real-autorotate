@@ -4,11 +4,9 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -85,6 +83,9 @@ public class AppSelectionActivity extends AppCompatActivity {
 
                 String name = (String) info.loadLabel(packageManager);
                 if (name == null || name.trim().isEmpty()) {
+                    continue;
+                }
+                if (name.startsWith("com.")) {
                     continue;
                 }
 

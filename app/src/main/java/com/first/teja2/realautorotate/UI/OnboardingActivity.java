@@ -2,11 +2,11 @@ package com.first.teja2.realautorotate.UI;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.PreferenceManager;
 
 import com.first.teja2.realautorotate.R;
 import com.first.teja2.realautorotate.Util.UsageStatsHelper;
